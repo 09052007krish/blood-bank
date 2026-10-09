@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BloodLink — Emergency Donor Network</title>
+  <style>
+    :root {
+      --red: #c62828;
+      --dark: #171717;
+      --muted: #6b7280;
+      --bg: #f6f7fb;
+      --line: #e5e7eb;
+      --green: #16803c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--dark);
+      font-family: Inter, system-ui, Arial, sans-serif;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; border: 0; }
+    .hidden { display: none !important; }
+    
+    /* Auth screen */
+    .auth-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #fff, #fff2f2);
+    }
+    .auth-card {
+      width: min(440px, 100%);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 30px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.08);
+    }
+    .brand, .logo { font-weight: 900; font-size: 24px; color: var(--red); }
+    .brand span, .logo span { color: #222; }
+    .tabs { display: flex; gap: 5px; margin: 20px 0; }
+    .tab {
+      background: #f1f3f5;
+      padding: 10px 14px;
+      border-radius: 9px;
+      color: #555;
+      font-weight: 600;
+    }
+    .tab.active { background: #fff0f0; color: var(--red); font-weight: 800; }
+    .auth-card form label, .formgrid label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    input, select {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      outline: none;
+      width: 100%;
+    }
+    .primary {
+      background: var(--red);
+      color: #fff;
+      padding: 12px 17px;
+      border-radius: 10px;
+      font-weight: 800;
+    }
+    .secondary {
+      background: #f1f3f5;
+      color: #333;
+      padding: 10px 13px;
+      border-radius: 9px;
+      font-weight: 700;
+    }
+    .wide { width: 100%; }
+    .message { min-height: 20px; color: #9b1c1c; font-size: 14px; }
+    .muted { color: var(--muted); font-size: 14px; }
+
+    /* App layout */
+    .nav {
+      height: 68px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6%;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .userbar { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .container { max-width: 1180px; margin: auto; padding: 25px 20px; }
+    .hero {
+      background: linear-gradient(120deg, #a91414, #e53935);
+      color: #fff;
+      border-radius: 24px;
+      padding: 34px;
+      display: grid;
+      grid-template-columns: 1.4fr .8fr;
+      gap: 25px;
+    }
+    .hero h1 { font-size: 40px; line-height: 1.05; margin: 14px 0; }
+    .hero p { color: #ffe8e8; max-width: 650px; }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff0f0;
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pill.light { background: #ffffff22; color: #fff; }
+    .sos {
+      background: #fff;
+      color: var(--red);
+      padding: 14px 20px;
+      border-radius: 11px;
+      font-weight: 900;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-content: center;
+    }
+    .stats div {
+      background: #ffffff18;
+      border: 1px solid #ffffff35;
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .stats b { font-size: 28px; display: block; }
+    .app-tabs {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 7px;
+      border-radius: 14px;
+      margin: 20px 0;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .page { display: none; }
+    .page.active { display: block; }
+    .section { margin-top: 25px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.03);
+    }
+    .formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .alert {
+      background: #fff4f4;
+      border: 1px solid #ffd0d0;
+      padding: 14px;
+      border-radius: 12px;
+      color: #8f1b1b;
+      margin-bottom: 15px;
+    }
+    .request {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+    }
+    .bankrow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: #171717;
+      color: #fff;
+      padding: 13px 16px;
+      border-radius: 12px;
+      display: none;
+      z-index: 50;
+    }
+
+    /* Friends2Support style UI components */
+    .filter-card {
+      background: #f8fbff;
+      border: 1px solid #c2dcf8;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 550px;
+      margin: 15px auto 25px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .filter-header {
+      background: #398be8;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .donor-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 14px;
+    }
+    .donor-table th {
+      background: #8b99a6;
+      color: #fff;
+      padding: 10px;
+      text-align: left;
+    }
+    .donor-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #eef2f5;
+    }
+    .status-available { color: #16803c; font-weight: 800; }
+    .status-unavailable { color: #dc2626; font-weight: 800; }
+    .btn-report {
+      color: #1d4ed8;
+      background: none;
+      border: 0;
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .info-notice {
+      background: #e9f4ff;
+      border: 1px solid #bce0fd;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #1e3a8a;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .formgrid { grid-template-columns: 1fr; }
+      .userbar span { display: none; }
+      .hero h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth Screen -->
+  <div id="authView" class="auth-shell">
+    <div class="auth-card">
+      <div class="brand">♥ Blood<span>Link</span></div>
+      <h1 id="authTitle">Welcome back</h1>
+      <p class="muted">Secure emergency blood-donor matching.</p>
+      
+      <div class="tabs">
+        <button type="button" id="loginTab" class="tab active" onclick="switchAuth(false)">Login</button>
+        <button type="button" id="signupTab" class="tab" onclick="switchAuth(true)">Create account</button>
+      </div>
+
+      <form id="authForm">
+        <div id="nameWrap" style="display: none;">
+          <label>
+            Full name
+            <input id="authName" placeholder="Aarav Sharma">
+          </label>
+        </div>
+        
+        <label>
+          Email
+          <input id="authEmail" type="email" required placeholder="name@example.com">
+        </label>
+        
+        <label>
+          Password
+          <input id="authPassword" type="password" minlength="6" required placeholder="••••••••">
+        </label>
+        
+        <div id="roleWrap" style="display: none;">
+          <label>
+            Account type
+            <select id="authRole">
+              <option value="donor">Blood donor</option>
+              <option value="requester">Patient relative / requester</option>
+            </select>
+          </label>
+        </div>
+        
+        <button class="primary wide" type="submit" id="authSubmit" style="margin-top: 10px;">Login</button>
+      </form>
+
+      <p id="authMessage" class="message"></p>
+      <small class="muted">Secure local storage mode active.</small>
+    </div>
+  </div>
+
+  <!-- Main Application Screen -->
+  <div id="appView" class="hidden">
+    <header class="nav">
+      <div class="logo">♥ Blood<span>Link</span></div>
+      <div class="userbar">
+        <span id="userEmail"></span>
+        <button id="logoutBtn" class="secondary" type="button" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <div>
+          <span class="pill light">REGIONAL DIRECTORY • KOLKATA NETWORK</span>
+          <h1>Find the right blood.<br>Find it fast.</h1>
+          <p>Direct donor phone directory, emergency SOS broadcasts, and regional hospital network.</p>
+          <button class="sos" type="button" onclick="showPage('request')">🚨 Create Emergency SOS</button>
+        </div>
+        <div class="stats">
+          <div><b id="nearbyCount">0</b><span>registered donors</span></div>
+          <div><b>Instant</b><span>direct access</span></div>
+        </div>
+      </section>
+
+      <!-- App Tabs -->
+      <nav class="tabs app-tabs">
+        <button type="button" class="tab active" data-page="search" onclick="showPage('search')">🔍 Search Donors</button>
+        <button type="button" class="tab" data-page="home" onclick="showPage('home')">Active SOS</button>
+        <button type="button" class="tab" data-page="donor" onclick="showPage('donor')">Donor Profile</button>
+        <button type="button" class="tab" data-page="request" onclick="showPage('request')">Post Blood Request</button>
+        <button type="button" class="tab" data-page="banks" onclick="showPage('banks')">Blood Banks</button>
+      </nav>
+
+      <!-- Search Section -->
+      <section id="search" class="page active">
+        <div class="filter-card">
+          <div class="filter-header">🔍 Search for Blood Donor</div>
+          <form id="searchDonorForm" class="formgrid" style="grid-template-columns: 1fr;">
+            <label>Blood Group
+              <select id="searchBloodGroup">
+                <option value="All">All Blood Groups</option>
+                <option value="A+">A+</option><option value="A-">A-</option>
+                <option value="B+">B+</option><option value="B-">B-</option>
+                <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                <option value="O+">O+</option><option value="O-">O-</option>
+              </select>
+            </label>
+            <label>Select State
+              <select id="searchState">
+                <option value="West Bengal">West Bengal</option>
+                <option value="All">All States</option>
+              </select>
+            </label>
+            <label>Select District
+              <select id="searchDistrict">
+                <option value="Kolkata">Kolkata</option>
+                <option value="All">All Districts</option>
+              </select>
+            </label>
+            <label>Select City / Locality
+              <select id="searchCity">
+                <option value="All">All Areas</option>
+                <option value="Ballygunge">Ballygunge</option>
+                <option value="Salt Lake">Salt Lake</option>
+                <option value="New Town">New Town</option>
+                <option value="Baguiati">Baguiati</option>
+              </select>
+            </label>
+            <button class="primary" type="submit" style="margin-top: 5px;">Search Donors</button>
+          </form>
+        </div>
+
+        <div class="info-notice">
+          <b>Important:</b> Report inappropriate data (Name, Phone number or Blood Group) by clicking the Report option.
+        </div>
+
+        <div class="card" style="overflow-x:auto;">
+          <h2>Donor Search Results</h2>
+          <table class="donor-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Blood Group</th>
+                <th>Area</th>
+                <th>Availability</th>
+                <th>Mobile No.</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="donorTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Active Requests Dashboard -->
+      <section id="home" class="page">
+        <div class="section">
+          <h2>Active emergency requests</h2>
+          <div id="requests" class="grid"></div>
+        </div>
+      </section>
+
+      <!-- Donor Profile Registration -->
+      <section id="donor" class="page">
+        <div class="card">
+          <h2>Donor registration</h2>
+          <p class="muted">Registering makes your phone number reachable by patients during emergencies.</p>
+          <form id="donorForm" class="formgrid">
+            <label>Full name<input name="name" required placeholder="Full Name"></label>
+            <label>Blood group
+              <select name="bloodGroup">
+                <option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option>
+                <option>O+</option><option>O-</option>
+              </select>
+            </label>
+            <label>Phone number<input name="phone" required placeholder="+91 9XXXXXXXXX"></label>
+            <label>State<input name="state" value="West Bengal" required></label>
+            <label>District<input name="district" value="Kolkata" required></label>
+            <label>City / Locality<input name="locality" required placeholder="e.g. Ballygunge or Salt Lake"></label>
+            <label>Availability
+              <select name="isAvailable">
+                <option value="true">Available</option>
+                <option value="false">Unavailable</option>
+              </select>
+            </label>
+            <button class="primary" type="submit">Save Donor Details</button>
+          </form>
+          <div id="donorMessage"></div>
+        </div>
+      </section>
+
+      <!-- Emergency Request Section (With Hospitals Dropdown) -->
+      <section id="request" class="page">
+        <div class="alert">
+          <b>Emergency safety:</b> Confirm blood requirement with hospital blood banks before posting.
+        </div>
+        <div class="card">
+          <h2>Post Emergency Blood Request</h2>
+          <form id="requestForm" class="formgrid">
+            <label>Patient name<input name="patientName" required placeholder="Patient Name"></label>
+            <label>Blood group
+              <select name="bloodGroup">
+                <option>A+</option><option>A-</option>
+                <option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option>
+                <option>O+</option><option>O-</option>
+              </select>
+            </label>
+            
+            <!-- Hospital Dropdown replacing manual input -->
+            <label>Hospital name
+              <select name="hospitalName" required>
+                <option value="" disabled selected>Select nearby hospital...</option>
+                <optgroup label="Government / Medical Colleges (Kolkata)">
+                  <option value="SSKM Hospital / IPGMER, Bhowanipore">SSKM Hospital / IPGMER, Bhowanipore</option>
+                  <option value="Calcutta Medical College & Hospital, College Street">Calcutta Medical College & Hospital, College Street</option>
+                  <option value="NRS Medical College & Hospital, Sealdah">NRS Medical College & Hospital, Sealdah</option>
+                  <option value="R. G. Kar Medical College & Hospital, Belgachia">R. G. Kar Medical College & Hospital, Belgachia</option>
+                  <option value="National Medical College & Hospital, Beniapukur">National Medical College & Hospital, Beniapukur</option>
+                  <option value="M. R. Bangur Hospital, Tollygunge">M. R. Bangur Hospital, Tollygunge</option>
+                </optgroup>
+                <optgroup label="Major Multispeciality & Private Hospitals">
+                  <option value="Apollo Multispeciality Hospital, EM Bypass">Apollo Multispeciality Hospital, EM Bypass</option>
+                  <option value="AMRI Hospital, Dhakuria">AMRI Hospital, Dhakuria</option>
+                  <option value="AMRI Hospital, Salt Lake">AMRI Hospital, Salt Lake</option>
+                  <option value="AMRI Hospital, Mukundapur">AMRI Hospital, Mukundapur</option>
+                  <option value="Fortis Hospital, Anandapur, EM Bypass">Fortis Hospital, Anandapur, EM Bypass</option>
+                  <option value="Ruby General Hospital, Kasba / EM Bypass">Ruby General Hospital, Kasba / EM Bypass</option>
+                  <option value="Peerless Hospital, Panchasayar">Peerless Hospital, Panchasayar</option>
+                  <option value="Medica Superspecialty Hospital, Mukundapur">Medica Superspecialty Hospital, Mukundapur</option>
+                  <option value="Belle Vue Clinic, Loudon Street">Belle Vue Clinic, Loudon Street</option>
+                  <option value="Woodlands Multispeciality Hospital, Alipore">Woodlands Multispeciality Hospital, Alipore</option>
+                  <option value="Desun Hospital, Kasba / EM Bypass">Desun Hospital, Kasba / EM Bypass</option>
+                  <option value="Charnock Hospital, VIP Road, Teghoria">Charnock Hospital, VIP Road, Teghoria</option>
+                  <option value="Salt Lake Sub-Divisional Hospital">Salt Lake Sub-Divisional Hospital</option>
+                  <option value="Tata Medical Center, Rajarhat, New Town">Tata Medical Center, Rajarhat, New Town</option>
+                </optgroup>
+                <optgroup label="Other">
+                  <option value="Other Nearby Clinic / Nursing Home">Other Nearby Clinic / Nursing Home</option>
+                </optgroup>
+              </select>
+            </label>
+
+            <label>Units needed<input name="unitsNeeded" type="number" min="1" value="1" required></label>
+            <label>Urgency
+              <select name="urgency">
+                <option>Critical — immediate</option>
+                <option>Urgent — within a few hours</option>
+                <option>Planned — today</option>
+              </select>
+            </label>
+            <label>Contact Phone<input name="contactPhone" required placeholder="+91 9XXXXXXXXX"></label>
+            <button class="primary" type="submit">🚨 Post Blood Request</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Blood Banks Section -->
+      <section id="banks" class="page">
+        <div class="card">
+          <h2>Authorized blood banks</h2>
+          <div id="banksList"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Application Logic -->
+  <script>
+    const DB = {
+      get: (k) => JSON.parse(localStorage.getItem('bl_' + k) || '[]'),
+      set: (k, v) => localStorage.setItem('bl_' + k, JSON.stringify(v)),
+      getUser: () => JSON.parse(localStorage.getItem('bl_curr_user') || 'null'),
+      setUser: (u) => localStorage.setItem('bl_curr_user', JSON.stringify(u))
+    };
+
+    let isSignupMode = false;
+    let currentUser = DB.getUser();
+
+    function $(id) { return document.getElementById(id); }
+
+    function toast(msg) {
+      const t = $('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2800);
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+    }
+
+    // Switch between Login and Signup Tabs
+    function switchAuth(signup) {
+      isSignupMode = signup;
+      
+      const loginTab = $('loginTab');
+      const signupTab = $('signupTab');
+      const nameWrap = $('nameWrap');
+      const roleWrap = $('roleWrap');
+      const authTitle = $('authTitle');
+      const authSubmit = $('authSubmit');
+      const authMsg = $('authMessage');
+
+      if (loginTab) loginTab.className = signup ? 'tab' : 'tab active';
+      if (signupTab) signupTab.className = signup ? 'tab active' : 'tab';
+
+      if (authTitle) authTitle.textContent = signup ? 'Create your BloodLink account' : 'Welcome back';
+      if (authSubmit) authSubmit.textContent = signup ? 'Create account' : 'Login';
+
+      if (nameWrap) nameWrap.style.display = signup ? 'block' : 'none';
+      if (roleWrap) roleWrap.style.display = signup ? 'block' : 'none';
+
+      if (authMsg) authMsg.textContent = '';
+    }
+    window.switchAuth = switchAuth;
+
+    // Page navigation
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === pageId));
+      document.querySelectorAll('.app-tabs .tab').forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+      if (pageId === 'search') renderSearchResults();
+      if (pageId === 'home') loadRequests();
+      if (pageId === 'banks') loadBanks();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.showPage = showPage;
+
+    // Extended 20+ Demo Donors (Friends2Support Style)
+    function seedDemo() {
+      const existing = DB.get('donors');
+      if (!existing || existing.length < 10) {
+        DB.set('donors', [
+          // A+ Donors
+          { id: 'demo1', name: 'JANARDHANA', bloodGroup: 'A+', locality: 'Ballygunge', district: 'Kolkata', phone: '+91 8121543043', isAvailable: true },
+          { id: 'demo2', name: 'Anurag Mukherjee', bloodGroup: 'A+', locality: 'Ballygunge', district: 'Kolkata', phone: '+91 9836030992', isAvailable: true },
+          { id: 'demo3', name: 'Tushar Bothra', bloodGroup: 'A+', locality: 'Ballygunge', district: 'Kolkata', phone: '+91 9836551224', isAvailable: true },
+          { id: 'demo4', name: 'Sk amirul', bloodGroup: 'A+', locality: 'Ballygunge', district: 'Kolkata', phone: '+91 7364882388', isAvailable: true },
+          { id: 'demo5', name: 'Subham Sen', bloodGroup: 'A+', locality: 'Salt Lake', district: 'Kolkata', phone: '+91 9830112233', isAvailable: false },
+          
+          // O- Donors
+          { id: 'demo6', name: 'Aarav Sharma', bloodGroup: 'O-', locality: 'Salt Lake', district: 'Kolkata', phone: '+91 9876543210', isAvailable: true },
+          { id: 'demo7', name: 'Pooja Bose', bloodGroup: 'O-', locality: 'New Town', district: 'Kolkata', phone: '+91 9831445566', isAvailable: true },
+          { id: 'demo8', name: 'Vikram Roy', bloodGroup: 'O-', locality: 'Baguiati', district: 'Kolkata', phone: '+91 9836887711', isAvailable: false },
+
+          // O+ Donors
+          { id: 'demo9', name: 'Rajesh Ghosh', bloodGroup: 'O+', locality: 'Ballygunge', district: 'Kolkata', phone: '+91 9433123456', isAvailable: true },
+          { id: 'demo10', name: 'Debjit Sarkar', bloodGroup: 'O+', locality: 'New Town', district: 'Kolkata', phone: '+91 9748234567', isAvailable: true },
+          { id: 'demo11', name: 'Sneha Majumdar', bloodGroup: 'O+', locality: 'Salt Lake', district: 'Kolkata', phone: '+91 9163345678', isAvailable: true },
+
+          // B+ Donors
+          { id: 'demo12', name: 'Riya Mondal', bloodGroup: 'B+', locality: 'New Town', district: 'Kolkata', phone: '+91 9876500000', isAvailable: true },
+          { id: 'demo13', name: 'Arpan Chakraborty', bloodGroup: 'B+', locality: 'Baguiati', district: 'Kolkata', phone: '+91 9830554433', isAvailable: true },
+          { id: 'demo14', name: 'Suman Paul', bloodGroup: 'B+', locality: 'Ballygunge', district: 'Kolkata', phone: '+91 9831998877', isAvailable: true },
+
+          // B- Donors
+          { id: 'demo15', name: 'Abhishek Das', bloodGroup: 'B-', locality: 'Salt Lake', district: 'Kolkata', phone: '+91 9432889900', isAvailable: true },
+          { id: 'demo16', name: 'Mousumi Dutta', bloodGroup: 'B-', locality: 'New Town', district: 'Kolkata', phone: '+91 9836123987', isAvailable: true },
+
+          // AB+ Donors
+          { id: 'demo17', name: 'Rohit Bannerjee', bloodGroup: 'AB+', locality: 'Ballygunge', district: 'Kolkata', phone: '+91 9874112244', isAvailable: true },
+          { id: 'demo18', name: 'Priyanka Naskar', bloodGroup: 'AB+', locality: 'Baguiati', district: 'Kolkata', phone: '+91 9051334455', isAvailable: true },
+
+          // AB- Donors
+          { id: 'demo19', name: 'Kunal Karmakar', bloodGroup: 'AB-', locality: 'Salt Lake', district: 'Kolkata', phone: '+91 9831223399', isAvailable: true },
+          { id: 'demo20', name: 'Tanmay Biswas', bloodGroup: 'AB-', locality: 'New Town', district: 'Kolkata', phone: '+91 9830998822', isAvailable: false }
+        ]);
+      }
+
+      if (!localStorage.getItem('bl_bloodBanks')) {
+        DB.set('bloodBanks', [
+          { id: 'bank1', name: 'Central Blood Bank (Maniktala)', status: 'Open 24/7', stock: { 'A+': 18, 'A-': 5, 'B+': 22, 'B-': 4, 'O+': 28, 'O-': 6, 'AB+': 10 } },
+          { id: 'bank2', name: 'SSKM Hospital Regional Blood Centre', status: 'Open 24/7', stock: { 'A+': 14, 'A-': 2, 'B+': 19, 'B-': 3, 'O+': 21, 'O-': 4, 'AB+': 8 } },
+          { id: 'bank3', name: 'Calcutta Medical College Blood Bank', status: 'Open 24/7', stock: { 'A+': 9, 'B+': 15, 'O+': 16, 'O-': 3, 'AB+': 6 } },
+          { id: 'bank4', name: 'Salt Lake Sub-Divisional Blood Bank', status: 'Open (8 AM - 8 PM)', stock: { 'A+': 11, 'B+': 13, 'O+': 15, 'O-': 2, 'AB+': 4 } }
+        ]);
+      }
+    }
+
+    function checkAuthState() {
+      const loggedIn = !!currentUser;
+      $('authView').classList.toggle('hidden', loggedIn);$('appView').classList.toggle('hidden', !loggedIn);
+      if (loggedIn) {
+        $('userEmail').textContent = currentUser.email;
+        seedDemo();
+        renderSearchResults();
+        loadRequests();
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('bl_curr_user');
+      checkAuthState();
+    }
+    window.logout = logout;
+
+    // Render Search Results Table
+    function renderSearchResults(bg = 'All', city = 'All') {
+      let donors = DB.get('donors');
+      if (bg && bg !== 'All') donors = donors.filter(d => d.bloodGroup === bg);
+      if (city && city !== 'All') donors = donors.filter(d => d.locality.toLowerCase().includes(city.toLowerCase()));
+
+      const table = $('donorTableBody');
+      if (!table) return;
+
+      if (!donors.length) {
+        table.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:20px;">No donors found for selected criteria.</td></tr>';
+        return;
+      }
+
+      table.innerHTML = donors.map(d => `
+        <tr>
+          <td><b>${esc(d.name)}</b></td>
+          <td><span class="pill" style="padding:3px 8px;font-size:11px;">${esc(d.bloodGroup)}</span></td>
+          <td>${esc(d.locality)}, ${esc(d.district || 'Kolkata')}</td>
+          <td>
+            <span class="${d.isAvailable ? 'status-available' : 'status-unavailable'}">
+              ${d.isAvailable ? 'Available' : 'Unavailable'}
+            </span>
+          </td>
+          <td>
+            <a href="tel:${esc(d.phone)}" style="color:#c62828;text-decoration:none;font-weight:bold;">
+              📞 ${esc(d.phone)}
+            </a>
+          </td>
+          <td>
+            <button type="button" class="btn-report" onclick="reportDonor('${d.id}')">Report</button>
+          </td>
+        </tr>
+      `).join('');
+
+      $('nearbyCount').textContent = DB.get('donors').length;
+    }
+
+    function reportDonor(id) {
+      const reason = prompt('Specify reason for reporting (e.g. Wrong phone number, unreachable, wrong blood group):');
+      if (reason) {
+        const reports = DB.get('reports');
+        reports.push({ id: 'r_' + Date.now(), donorId: id, reason, reporter: currentUser.email, date: new Date().toISOString() });
+        DB.set('reports', reports);
+        toast('Report registered. Thank you.');
+      }
+    }
+    window.reportDonor = reportDonor;
+
+    function loadRequests() {
+      const reqs = DB.get('requests');
+      const box = $('requests');
+      if (!box) return;
+
+      box.innerHTML = !reqs.length
+        ? '<div class="card"><p>No active requests yet. Post the first blood request.</p></div>'
+        : reqs.map(r => `
+          <div class="request">
+            <span class="pill">URGENT • ${esc(r.bloodGroup)}</span>
+            <h3>${esc(r.hospitalName)}</h3>
+            <p class="muted">${r.unitsNeeded} unit(s) • ${esc(r.urgency)} • Contact: ${esc(r.contactPhone || 'N/A')}</p>
+            <button type="button" class="primary" onclick="showPage('search')">Find donors</button>
+          </div>
+        `).join('');
+    }
+
+    function loadBanks() {
+      const bs = DB.get('bloodBanks');
+      const box = $('banksList');
+      if (!box) return;
+
+      box.innerHTML = bs.map(b => `
+        <div class="bankrow">
+          <div>
+            <b>${esc(b.name)}</b>
+            <div class="muted">${esc(b.status)}</div>
+          </div>
+          <b>${Object.entries(b.stock || {}).map(([g, n]) => `${g}:${n}`).join(' • ')}</b>
+        </div>
+      `).join('');
+    }
+
+    // Attach Event Listeners
+    window.addEventListener('DOMContentLoaded', () => {
+      // Auth Form Submission
+      $('authForm').onsubmit = (e) => {
+        e.preventDefault();
+        $('authMessage').textContent = '';
+        const email = $('authEmail').value.trim();
+        const password = $('authPassword').value;
+        const users = DB.get('users');
+
+        if (isSignupMode) {
+          if (users.find(u => u.email === email)) {
+            $('authMessage').textContent = 'An account with this email already exists.';
+            return;
+          }
+          const newUser = {
+            uid: 'u_' + Date.now(),
+            email: email,
+            displayName: $('authName').value.trim() || email.split('@')[0],
+            role: $('authRole').value
+          };
+          users.push({ ...newUser, password });
+          DB.set('users', users);
+          currentUser = newUser;
+          DB.setUser(newUser);
+          toast('Account created securely.');
+          checkAuthState();
+        } else {
+          const found = users.find(u => u.email === email && u.password === password);
+          if (!found) {
+            $('authMessage').textContent = 'Incorrect email or password.';
+            return;
+          }
+          currentUser = { uid: found.uid, email: found.email, displayName: found.displayName, role: found.role };
+          DB.setUser(currentUser);
+          checkAuthState();
+        }
+      };
+
+      // Filter Form Submit
+      $('searchDonorForm').onsubmit = (e) => {
+        e.preventDefault();
+        renderSearchResults($('searchBloodGroup').value, $('searchCity').value);
+      };
+
+      // Register Donor Form
+      $('donorForm').onsubmit = (e) => {
+        e.preventDefault();
+        const f = Object.fromEntries(new FormData(e.target));
+        const donors = DB.get('donors');
+        const donorData = {
+          ...f,
+          id: currentUser.uid,
+          isAvailable: f.isAvailable === 'true'
+        };
+        donors.unshift(donorData);
+        DB.set('donors', donors);
+        $('donorMessage').innerHTML = '<p style="color:#16803c;font-weight:800;margin-top:10px;">✓ Registered successfully in donor directory.</p>';
+        toast('Donor profile added.');
+      };
+
+      // Post SOS Request Form (Picks selected hospital from dropdown)
+      $('requestForm').onsubmit = (e) => {
+        e.preventDefault();
+        const f = Object.fromEntries(new FormData(e.target));
+        const reqs = DB.get('requests');
+        reqs.unshift({ ...f, id: 'req_' + Date.now(), unitsNeeded: +f.unitsNeeded, requesterEmail: currentUser.email });
+        DB.set('requests', reqs);
+        toast('Emergency SOS broadcasted.');
+        e.target.reset();
+        showPage('home');
+      };
+
+      checkAuthState();
+    });
+  </script>
+</body>
+</html>
